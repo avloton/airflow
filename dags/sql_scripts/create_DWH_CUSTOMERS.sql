@@ -1,0 +1,21 @@
+CREATE TABLE if not exists DWH_CUSTOMERS(
+customer_id integer primary key,
+first_name text,
+last_name text,
+gender text,
+past_3_years_bike_related_purchases text,
+DOB date,
+job_title text,
+job_industry_category text,
+wealth_segment text,
+deceased_indicator text,
+owns_car text,
+tenure text,
+address text,
+postcode text,
+state text,
+country text,
+property_valuation text,
+create_dt timestamp,
+update_dt timestamp
+);

@@ -1,7 +1,7 @@
 
 import pendulum
 from airflow.decorators import dag, task
-from config import root, db_url, input_file
+from config import root, db_url, input_file, web_data_category
 
 @dag(
     schedule=None,
@@ -10,7 +10,31 @@ from config import root, db_url, input_file
     tags=["work"]
 )
 def my_etl():
+
+    @task()
+    def extract_web_data(category_name: str):
+        from py_scripts.my_parser import MyParser
+
+        parser = MyParser(category_name)
+        data = parser.take_all_files()
+
+        d = {'web_data': data}
+
+        return d
     
+    @task()
+    def web_data_to_db(db_path: str, d: dict):
+        from py_scripts.etl_task import EtlTask
+        
+        task = EtlTask(db_path)
+
+        #Create table and insert data
+        task.read_sql(f'{root}sql_scripts/create_WEB_DATA.sql')
+        task.insert_data('WEB_DATA', d['web_data'])
+
+        return 'ok'
+
+
     @task()
     def extract(file_name: str):
         import pandas as pd
@@ -74,11 +98,15 @@ def my_etl():
         task.read_sql(f'{root}sql_scripts/insert_DWH_CUSTOMERS.sql')
         task.read_sql(f'{root}sql_scripts/insert_DWH_TRANSACTIONS.sql')
 
-        return 'to_dwh_ok'
+        return 'ok'
 
-
+    #Etl file to DB
     d = extract(input_file)
     stage_db_path = to_stage(db_url, d)
     to_dwh(stage_db_path)
+
+    #Etl web data to DB
+    web_data = extract_web_data(web_data_category)
+    web_data_to_db(db_url, web_data)
     
 my_etl()

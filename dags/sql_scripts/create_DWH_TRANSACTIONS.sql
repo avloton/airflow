@@ -1,10 +1,10 @@
 CREATE TABLE if not exists DWH_TRANSACTIONS(
-transation_id integer primary key,
-product_id integer,
-customer_id integer,
-transaction_date date,
-online_order integer,
-order_status text,
-create_dt timestamp,
-update_dt timestamp
+    transation_id integer primary key,
+    product_id integer,
+    customer_id integer,
+    transaction_date date,
+    online_order integer,
+    order_status text,
+    create_dt timestamp,
+    update_dt timestamp
 );

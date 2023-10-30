@@ -7,18 +7,11 @@ class EtlTask:
 
     def __init__(self, db_path):
         self.db_path = db_path
-
-    def initialize_stg(self, stg_table_name: str) -> None:
+    
+    def read_sql(self, sql: str) -> None:
         connect = Connection(self.db_path)
-        connect.read_sql_script(f"{root}sql_scripts/create_{stg_table_name}.sql")
-
-    def insert_data_to_stg(self, stg_table_name: str, data: pd.DataFrame) -> None:
+        connect.read_sql_script(sql)
+    
+    def insert_data(self, table_name: str, data: pd.DataFrame) -> None:
         connect = Connection(self.db_path)
-        connect.insert_data(stg_table_name, data)
-
-    def make_dwh(self, dwh_table_name: str) -> None:
-        connect = Connection(self.db_path)
-        connect.read_sql_script(dwh_table_name)
-
-
-
+        connect.insert_data(table_name, data)

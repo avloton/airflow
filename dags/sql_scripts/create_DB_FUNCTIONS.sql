@@ -13,32 +13,27 @@ begin
 end;
 $$ language plpgsql;
 
-create or replace function to_date_or_return_null(str varchar)
-returns date language plpgsql as $$
+create or replace function to_date_or_return_null(str varchar) returns date language plpgsql as $$
 begin
-    return to_date(str, 'YYYY-MM-DD');
-exception
-    when others then return null;
+    return to_date(str,'YYYY-MM-DD');
+	exception
+		when others then return null;
 end $$;
 
-CREATE OR REPLACE FUNCTION to_integer_or_return_null(str character varying)
- RETURNS integer
- LANGUAGE plpgsql
-AS $function$
+create or replace
+function to_integer_or_return_null(str varchar) returns integer language plpgsql as $function$
 begin
     return str::numeric::integer;
-exception
-    when others then return null;
+	exception
+		when others then return null;
 end $function$;
 
-CREATE OR REPLACE FUNCTION to_real_or_return_null(str character varying)
- RETURNS real
- LANGUAGE plpgsql
-AS $function$
+create or replace
+function to_real_or_return_null(str varchar) returns real language plpgsql as $function$
 begin
 	if str = 'nan' then return null;
 	end if;
-    return cast(str as real);
-exception
-    when others then return null;
+	return cast(str as real);
+	exception
+		when others then return null;
 end $function$;

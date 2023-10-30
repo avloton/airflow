@@ -16,9 +16,9 @@ def my_etl():
         import pandas as pd
                 
         #Read Excel sheets
-        transactions = pd.read_excel(f'{root}{file_name}', sheet_name='Transactions')
-        customers = pd.read_excel(f'{root}{file_name}', sheet_name='CustomerDemographic')
-        customers_address = pd.read_excel(f'{root}{file_name}', sheet_name='CustomerAddress')
+        transactions = pd.read_excel(f'{root}{file_name}', sheet_name='Transactions', na_filter=False)
+        customers = pd.read_excel(f'{root}{file_name}', sheet_name='CustomerDemographic', na_filter=False)
+        customers_address = pd.read_excel(f'{root}{file_name}', sheet_name='CustomerAddress', na_filter=False)
 
         # rename reserved word
         customers = customers.rename({'default': 'default_x'}, axis=1) 
@@ -35,12 +35,14 @@ def my_etl():
         task = EtlTask(db_path)
 
         #Initialize and insert data to STAGE
-        task.initialize_stg('STG_TRANSACTIONS')
-        task.insert_data_to_stg('STG_TRANSACTIONS', d['transactions'])
-        task.initialize_stg('STG_CUSTOMERS')
-        task.insert_data_to_stg('STG_CUSTOMERS', d['customers'])
-        task.initialize_stg('STG_CUSTOMERS_ADDRESS')
-        task.insert_data_to_stg('STG_CUSTOMERS_ADDRESS', d['customers_address'])
+        task.read_sql(f'{root}sql_scripts/create_STG_TRANSACTIONS.sql')
+        task.insert_data('STG_TRANSACTIONS', d['transactions'])
+
+        task.read_sql(f'{root}sql_scripts/create_STG_CUSTOMERS.sql')
+        task.insert_data('STG_CUSTOMERS', d['customers'])
+
+        task.read_sql(f'{root}sql_scripts/create_STG_CUSTOMERS_ADDRESS.sql')
+        task.insert_data('STG_CUSTOMERS_ADDRESS', d['customers_address'])
 
         return task.db_path
     
@@ -54,23 +56,23 @@ def my_etl():
         
         #Create DB functions
         logging.info("Create DB functions")
-        task.make_dwh(f'{root}sql_scripts/create_DB_FUNCTIONS.sql')
+        task.read_sql(f'{root}sql_scripts/create_DB_FUNCTIONS.sql')
 
         #Create DWH tables if not exists
         logging.info("Create DWH tables if not exists")
-        task.make_dwh(f'{root}sql_scripts/create_DWH_CUSTOMERS.sql')
-        task.make_dwh(f'{root}sql_scripts/create_DWH_PRODUCTS.sql')
-        task.make_dwh(f'{root}sql_scripts/create_DWH_TRANSACTIONS.sql')
+        task.read_sql(f'{root}sql_scripts/create_DWH_CUSTOMERS.sql')
+        task.read_sql(f'{root}sql_scripts/create_DWH_PRODUCTS.sql')
+        task.read_sql(f'{root}sql_scripts/create_DWH_TRANSACTIONS.sql')
 
         #Create DB triggers
         logging.info("Create DB triggers")
-        task.make_dwh(f'{root}sql_scripts/create_DB_TRIGGERS.sql')
+        task.read_sql(f'{root}sql_scripts/create_DB_TRIGGERS.sql')
 
         #Insert data to DWH
         logging.info("Insert data to DWH")
-        task.make_dwh(f'{root}sql_scripts/insert_DWH_PRODUCTS.sql')
-        task.make_dwh(f'{root}sql_scripts/insert_DWH_CUSTOMERS.sql')
-        task.make_dwh(f'{root}sql_scripts/insert_DWH_TRANSACTIONS.sql')
+        task.read_sql(f'{root}sql_scripts/insert_DWH_PRODUCTS.sql')
+        task.read_sql(f'{root}sql_scripts/insert_DWH_CUSTOMERS.sql')
+        task.read_sql(f'{root}sql_scripts/insert_DWH_TRANSACTIONS.sql')
 
         return 'to_dwh_ok'
 

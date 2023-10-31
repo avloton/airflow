@@ -12,6 +12,8 @@ AIRFLOW_UID - this is your user id.
 
 http://localhost:8080/
 
+login and password: airflow
+
 #### Datalens
 
 http://localhost:8083/

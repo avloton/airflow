@@ -8,12 +8,14 @@
 AIRFLOW_UID - this is your user id.
 
 
-#### Airflow 
+#### Airflow Web UI
 
 http://localhost:8080/
 
 login and password: airflow
 
-#### Datalens
+#### Datalens Web UI
 
 http://localhost:8083/
+
+Datalens GitHub page: https://github.com/datalens-tech/datalens

@@ -10,6 +10,6 @@ SELECT cast(transaction_id as integer),
     cast(product_id as integer),
     cast(customer_id as integer),
     to_date_or_return_null(transaction_date) as transaction_date,
-    to_integer_or_return_null(online_order) as online_order,
+    to_boolean_or_return_null(online_order) as online_order,
     order_status
 FROM stg_transactions on conflict do nothing;

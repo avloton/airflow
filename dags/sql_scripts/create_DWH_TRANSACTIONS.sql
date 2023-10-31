@@ -3,7 +3,7 @@ CREATE TABLE if not exists DWH_TRANSACTIONS(
     product_id integer,
     customer_id integer,
     transaction_date date,
-    online_order integer,
+    online_order boolean,
     order_status text,
     create_dt timestamp,
     update_dt timestamp

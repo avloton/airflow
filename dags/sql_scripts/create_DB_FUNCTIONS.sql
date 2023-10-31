@@ -37,3 +37,11 @@ begin
 	exception
 		when others then return null;
 end $function$;
+
+create or replace
+function to_boolean_or_return_null(str varchar) returns boolean language plpgsql as $function$
+begin
+	return str::boolean;
+	exception
+		when others then return null;
+end $function$;

@@ -98,15 +98,33 @@ def my_etl():
         task.read_sql(f'{root}sql_scripts/insert_DWH_CUSTOMERS.sql')
         task.read_sql(f'{root}sql_scripts/insert_DWH_TRANSACTIONS.sql')
 
-        return 'ok'
+        return task.db_path
+    
+    @task()
+    def prepare_data_for_ml(db_path):
+        from py_scripts.etl_task import EtlTask
+        import logging
+
+        logging.info("Preparing ML Data ...")
+        task = EtlTask(db_path)
+        task.read_sql(f'{root}sql_scripts/create_ML_DATA.sql')
+        task.read_sql(f'{root}sql_scripts/clean_ML_DATA.sql')
+        task.read_sql(f'{root}sql_scripts/insert_ML_DATA.sql')
+        logging.info("Done.")
+
+        return task.db_path
+
 
     #Etl file to DB
     d = extract(input_file)
     stage_db_path = to_stage(db_url, d)
-    to_dwh(stage_db_path)
+    dwh_db_path = to_dwh(stage_db_path)
 
     #Etl web data to DB
     web_data = extract_web_data(web_data_category)
     web_data_to_db(db_url, web_data)
+
+    #ML Data
+    prepare_data_for_ml(dwh_db_path)
     
 my_etl()

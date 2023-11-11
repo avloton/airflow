@@ -113,6 +113,66 @@ def my_etl():
         logging.info("Done.")
 
         return task.db_path
+    
+    @task()
+    def transform_ml_data(db_path):
+        from py_scripts.etl_task import EtlTask
+        import pandas as pd
+
+        #Read ML data
+        task = EtlTask(db_path)
+        sqlalchemy_engine = task.get_sqlalchemy_conn()
+        query = "select * from ml_data"
+        df = pd.read_sql_query(query, con=sqlalchemy_engine)
+
+        #Transform ML data
+        df = pd.get_dummies(data=df, columns=['wealth_segment'])
+        df = pd.get_dummies(data=df, columns=['job_industry_category'])
+        df.replace({False: 0, True: 1}, inplace=True)
+
+        #Write ML data to DB
+        df.to_sql('ml_data_transformed', con=sqlalchemy_engine, if_exists='replace')
+
+        return db_path
+    
+    @task()
+    def create_model(db_path):
+        from py_scripts.etl_task import EtlTask
+        from py_scripts.model import Model
+        from sklearn.model_selection import train_test_split
+        import pandas as pd
+        import os
+        import mlflow
+        from mlflow.models import infer_signature
+
+        #Read ML data
+        task = EtlTask(db_path)
+        sqlalchemy_engine = task.get_sqlalchemy_conn()
+        query = "select * from ml_data_transformed"
+        df = pd.read_sql_query(query, con=sqlalchemy_engine)
+
+        #Initialize Model and X, y
+        model = Model()
+        X = df.drop(columns=['online_order', 'index'], axis=1)
+        y = df['online_order']
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=0)
+
+        #MLFlow experiment name
+        os.environ['MLFLOW_EXPERIMENT_NAME'] = 'MyExp' 
+
+        with mlflow.start_run() as run:
+            #Create Model
+            model.fit(X_train, y_train)
+            preds = model.predict(X_test)
+            signature = infer_signature(X_train, preds)
+            mlflow.sklearn.log_model(model.model, "MyModel", signature=signature, registered_model_name='RandomForestModel')
+
+            #Send Metrics to MLFlow
+            metrics = model.get_metrics(X_test, y_test)
+            for j in metrics:
+                mlflow.log_metric(j, metrics[j])
+
+        return 'Done'
 
 
     #Etl file to DB
@@ -124,7 +184,9 @@ def my_etl():
     web_data = extract_web_data(web_data_category)
     web_data_to_db(db_url, web_data)
 
-    #ML Data
-    prepare_data_for_ml(dwh_db_path)
+    #ML Operations
+    pdfm = prepare_data_for_ml(dwh_db_path)
+    tmd = transform_ml_data(pdfm)
+    create_model(tmd)
     
 my_etl()

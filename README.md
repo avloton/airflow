@@ -32,6 +32,6 @@ Datalens GitHub page: https://github.com/datalens-tech/datalens
     login: admin
     password: sample_key
 
-#### MLFlow WebUI
+#### MLFlow Web UI
 
     http://localhost:5001/

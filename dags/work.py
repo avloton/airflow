@@ -172,8 +172,37 @@ def my_etl():
             for j in metrics:
                 mlflow.log_metric(j, metrics[j])
 
-        return 'Done'
+        return db_path
 
+    @task()
+    def load_model(db_path):
+        from py_scripts.etl_task import EtlTask
+        from py_scripts.model import Model
+        from sklearn.model_selection import train_test_split
+        import pandas as pd
+        import os
+        import mlflow
+        from mlflow.models import infer_signature
+
+        #Read ML data
+        task = EtlTask(db_path)
+        sqlalchemy_engine = task.get_sqlalchemy_conn()
+        query = "select * from ml_data_transformed"
+        df = pd.read_sql_query(query, con=sqlalchemy_engine)
+
+        #Initialize Model and X
+        X = df.drop(columns=['online_order', 'index'], axis=1)
+        loaded_model = mlflow.sklearn.load_model('models:/RandomForestModel/None')
+        model = Model()
+        model.model = loaded_model
+        preds = model.predict(X)
+        X['online_order'] = preds
+
+        #Write predicted data to DB
+        X.to_sql('ml_data_predicted', con=sqlalchemy_engine, if_exists='replace', index=False)
+
+        return 'Done'
+    
 
     #Etl file to DB
     d = extract(input_file)
@@ -187,6 +216,7 @@ def my_etl():
     #ML Operations
     pdfm = prepare_data_for_ml(dwh_db_path)
     tmd = transform_ml_data(pdfm)
-    create_model(tmd)
+    cm = create_model(tmd)
+    load_model(cm)
     
 my_etl()
